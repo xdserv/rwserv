@@ -12,11 +12,11 @@ import aiohttp
 import logging
 import ipaddress
 import subprocess
-from aiohttp import web
+from aiohttp import web, ClientTimeout
 
 # 环境变量
 UUID = os.environ.get('UUID', '6c4fbff7-70c0-416c-ac50-e5a3804ef55c') # 项目和节点UUID
-DOMAIN = os.environ.get('DOMAIN', 'py2wsm.933993.xyz') # 项目分配的域名或反代后的域名:abc.xxx.com
+DOMAIN = os.environ.get('DOMAIN', 'tasdgate.wasmer.app') # 项目分配的域名或反代后的域名:abc.xxx.com
 
 SUB_PATH = os.environ.get('SUB_PATH', '800') # 订阅路径
 NAME = os.environ.get('NAME', 'py-node') # 节点名称
@@ -86,7 +86,7 @@ async def get_isp():
         async with aiohttp.ClientSession() as session:
             async with session.get('https://api.ip.sb/geoip',
                                  headers={'User-Agent': 'Mozilla/5.0'},
-                                 timeout=3) as resp:
+                                 timeout=ClientTimeout(total=3, connect=2, sock_connect=2, sock_read=2)) as resp:
                 if resp.status == 200:
                     data = await resp.json()
                     ISP = f"{data.get('country_code', '')}-{data.get('isp', '')}".replace(' ', '_')
@@ -97,8 +97,8 @@ async def get_isp():
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get('http://ip-api.com/json',
-                                 headers={'User-Agent': 'Mozilla/5.0'},
-                                 timeout=3) as resp:
+                                   headers={'User-Agent': 'Mozilla/5.0'},
+                                   timeout=ClientTimeout(total=3, connect=2, sock_connect=2, sock_read=2)) as resp:
                 if resp.status == 200:
                     data = await resp.json()
                     ISP = f"{data.get('countryCode', '')}-{data.get('org', '')}".replace(' ', '_')
@@ -107,6 +107,19 @@ async def get_isp():
         pass
 
     ISP = 'Unknown'
+
+meta_refresh_running = False
+
+async def refresh_meta():
+    global meta_refresh_running
+    if meta_refresh_running:
+        return
+    meta_refresh_running = True
+    try:
+        await get_isp()
+        await get_ip()
+    finally:
+        meta_refresh_running = False
 
 async def get_ip():
     global CurrentDomain, Tls, CurrentPort
@@ -517,8 +530,7 @@ async def http_handler(request):
             return web.Response(text='Hello world!', content_type='text/html')
 
     elif request.path == f'/{SUB_PATH}':
-        await get_isp()
-        await get_ip()
+        asyncio.create_task(refresh_meta())
 
         name_part = f"{NAME}-{ISP}" if NAME else ISP
         tls_param = 'tls' if Tls == 'tls' else 'none'
@@ -673,6 +685,7 @@ async def main():
     site = web.TCPSite(runner, '0.0.0.0', actual_port)
     await site.start()
     logger.info(f"✅ server is running on port {actual_port}")
+    asyncio.create_task(refresh_meta())
     asyncio.create_task(run_nezha())
     async def delayed_cleanup():
         await asyncio.sleep(180)
